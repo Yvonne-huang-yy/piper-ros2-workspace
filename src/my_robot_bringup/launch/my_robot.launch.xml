@@ -1,0 +1,43 @@
+<launch>
+
+    <arg name="can_port" default="can0" description="CAN port for the robot arm"/>
+    <arg name="auto_enable" default="true" description="Enable robot arm automatically"/>
+    <arg name="rviz_ctrl_flag" default="false" description="Start rviz flag."/>
+    <arg name="girpper_exist" default="false" description="gripper"/>
+
+    <let name="urdf_path" 
+        value="$(find-pkg-share my_robot_description)/urdf/my_robot.urdf.xacro" />
+
+    <let name="rviz_config_path" 
+        value="$(find-pkg-share my_robot_description)/rviz/urdf_config.rviz" />
+        
+    <node pkg="robot_state_publisher" exec="robot_state_publisher">
+        <param name="robot_description"
+              value="$(command 'xacro $(var urdf_path)')" />
+    </node>
+
+   <node pkg="controller_manager" exec="ros2_control_node">
+        <param from="$(find-pkg-share my_robot_bringup)/config/ros2_controllers.yaml" />
+    </node>   
+
+    <node pkg="controller_manager" exec="spawner" args="joint_state_broadcaster" />
+    <node pkg="controller_manager" exec="spawner" args="arm_controller" />
+    <node pkg="controller_manager" exec="spawner" args="gripper_controller" />
+
+    <include file="$(find-pkg-share my_robot_moveit_config)/launch/move_group.launch.py" />
+
+    <node name="piper_ctrl_single_node" 
+        pkg="piper" 
+        exec="piper_single_ctrl" 
+        output="screen">
+        <param name="can_port" value="$(var can_port)"/>
+        <param name="auto_enable" value="$(var auto_enable)"/>
+        <param name="rviz_ctrl_flag" value="$(var rviz_ctrl_flag)"/>
+        <param name="girpper_exist" value="$(var girpper_exist)"/>
+        <remap from="joint_ctrl_single" to="/joint_states"/>
+    </node>
+
+    <node pkg="rviz2" exec="rviz2" output="screen" 
+         args="-d $(var rviz_config_path)" />
+
+</launch>

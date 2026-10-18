@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 唯一根节点：所有内容必须包裹在<launch>内 -->
+<launch>
+
+  <!-- 1. 声明启动参数 -->
+  <arg name="can_port" default="can0" description="CAN port for the robot arm"/>
+  <arg name="auto_enable" default="true" description="Enable robot arm automatically"/>
+  <arg name="rviz_ctrl_flag" default="false" description="Start rviz flag."/>
+  <arg name="girpper_exist" default="false" description="gripper"/>
+
+  <!-- 2. 包含机器人可视化Launch文件（确保display.launch.xml本身无语法错误） -->
+  <!--include file="$(find-pkg-share my_robot_description)/launch/display.launch.xml">-->
+    <!-- 透传参数到子Launch（解除注释即可生效） -->
+    <!-- <arg name="rviz_flag" value="$(var rviz_ctrl_flag)"/> -->
+  <!--/include>-->
+
+  <!-- 3. 机械臂CAN控制节点（标签完整闭合） -->
+  <node name="piper_ctrl_single_node" 
+        pkg="piper" 
+        exec="piper_single_ctrl" 
+        output="screen">
+    <param name="can_port" value="$(var can_port)"/>
+    <param name="auto_enable" value="$(var auto_enable)"/>
+    <param name="rviz_ctrl_flag" value="$(var rviz_ctrl_flag)"/>
+    <param name="girpper_exist" value="$(var girpper_exist)"/>
+    <remap from="joint_ctrl_single" to="/joint_states"/>
+  </node>
+
+</launch>
+<!-- 唯一根节点结束：无多余标签、无未闭合内容 -->
